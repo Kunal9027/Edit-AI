@@ -14,18 +14,80 @@ def create_watermark(text, size, opacity=0.7, fontsize=30):
     watermark = watermark.set_position(lambda t: (40, ((size[1] - watermark.h) // 2)+60))
     return watermark
 
-def create_text_overlay(text, size, position='top', fontsize=40):
-    """Create a text overlay with animation"""
-    text_clip = (TextClip(text, fontsize=fontsize, color='white', font='Arial-Bold')
-                .set_duration(size[2]))
+def create_text_overlay(
+    text, 
+    size, 
+    position='top',           # Can be 'top', 'bottom', or tuple of (x, y) coordinates
+    fontsize=40,
+    font_style='Arial-Bold', # Font family/style
+    text_color='white',      # Text color
+    x_offset=0,             # Additional horizontal offset
+    y_offset=0              # Additional vertical offset
+):
+    """
+    Create a text overlay with customizable positioning and styling
     
-    if position == 'top':
-        y_pos = 40
-    else:
-        y_pos = size[1] - text_clip.h - 20
-    
-    x_pos = (size[0] - text_clip.w) // 2
-    return text_clip.set_position((x_pos, y_pos))
+    Parameters:
+    -----------
+    text : str
+        The text to display
+    size : tuple
+        (width, height, duration) of the video
+    position : str or tuple
+        'top', 'bottom', or tuple of (x, y) coordinates for custom positioning
+    fontsize : int
+        Size of the font
+    font_style : str
+        Font family and style (must be available in system)
+    text_color : str
+        Color of the text (can be color name or hex code)
+    x_offset : int
+        Additional horizontal offset from calculated position
+    y_offset : int
+        Additional vertical offset from calculated position
+    """
+    try:
+        # Create text clip with custom styling
+        text_clip = (TextClip(
+            text, 
+            fontsize=fontsize, 
+            color=text_color, 
+            font=font_style
+        ).set_duration(size[2]))
+        
+        # Calculate position
+        if isinstance(position, tuple):
+            # Use exact coordinates if position is a tuple
+            x_pos, y_pos = position
+        else:
+            # Calculate x position (centered by default)
+            x_pos = (size[0] - text_clip.w) // 2
+            
+            # Calculate y position based on position parameter
+            if position == 'top':
+                y_pos = 40
+            elif position == 'bottom':
+                y_pos = size[1] - text_clip.h - 20
+            else:  # Default to top if invalid position is provided
+                y_pos = 40
+        
+        # Apply additional offsets
+        final_x = x_pos + x_offset
+        final_y = y_pos + y_offset
+        
+        return text_clip.set_position((final_x, final_y))
+        
+    except Exception as e:
+        print(f"Error creating text overlay: {str(e)}")
+        # Return a default text clip if there's an error
+        return (TextClip(
+            text,
+            fontsize=40,
+            color='white',
+            font='Arial-Bold'
+        ).set_duration(size[2])
+         .set_position(('center', 'top')))
+
 def mix_audio(video1_audio, background_music_path, duration, bg_volume=0.3):
     """
     Mix video1's audio with looping background music correctly
@@ -74,7 +136,7 @@ def adjust_video2_duration(video2, target_duration):
         return video2.subclip(0, target_duration)
 
 def combine_videos_vertically(
-    video1_path, 
+       video1_path, 
     video2_path, 
     output_path, 
     target_resolution=1080, 
@@ -82,10 +144,16 @@ def combine_videos_vertically(
     watermark="",
     watermark_opacity=0.7,
     text_overlay="",
-    background_music_path=None,
-    bg_music_volume=0.3,
-    video1_offset=34,  # New parameter for video1 position offset
-    video2_offset=34   # New parameter for video2 position offset
+    text_position='top',      # New parameter
+    text_fontsize=40,         # New parameter
+    text_font='Arial-Bold',   # New parameter
+    text_color='white',       # New parameter
+    text_x_offset=0,          # New parameter
+    text_y_offset=0,          # New parameter
+    background_music_path=None,  # background audio
+    bg_music_volume=0.3,      # background audio volume
+    video1_offset=34,         # New parameter for video1 position offset
+    video2_offset=34          # New parameter for video2 position offset
 ):
     try:
         # Load videos
@@ -113,7 +181,7 @@ def combine_videos_vertically(
         
         final_duration = video1_squared.duration
         
-        # Create black background
+        # Create black background   
         background = ColorClip(size=(output_width, output_height), color=(0, 0, 0), duration=final_duration)
         
         # List of clips to composite
@@ -130,9 +198,16 @@ def combine_videos_vertically(
         if text_overlay:
             text_clip = create_text_overlay(
                 text_overlay,
-                (output_width, output_height, final_duration)
+                (output_width, output_height, final_duration),
+                position=text_position,
+                fontsize=text_fontsize,
+                font_style=text_font,
+                text_color=text_color,
+                x_offset=text_x_offset,
+                y_offset=text_y_offset
             )
             clips.append(text_clip)
+
         
         # Create final composite for video
         final_video = CompositeVideoClip(clips, size=(output_width, output_height))
@@ -189,121 +264,6 @@ def combine_videos_vertically(
         except:
             pass
 
-# def combine_videos_vertically(
-#     video1_path, 
-#     video2_path, 
-#     output_path, 
-#     target_resolution=1080, 
-#     aspect_ratio=(9, 16),
-#     watermark="",
-#     watermark_opacity=0.7,
-#     text_overlay="",
-#     background_music_path=None,
-#     bg_music_volume=0.3
-# ):
-#     try:
-#         # Load videos
-#         video1 = VideoFileClip(video1_path)
-#         video2 = VideoFileClip(video2_path)
-        
-#         # Calculate dimensions
-#         output_height = target_resolution
-#         output_width = int(output_height * aspect_ratio[0] / aspect_ratio[1])
-#         square_size = output_height // 2
-        
-#         # Process videos to squares
-#         video1_squared = resize_to_square(video1, square_size)
-#         video2_squared = resize_to_square(video2, square_size)
-        
-#         # Adjust video2 duration to match video1
-#         video2_squared = adjust_video2_duration(video2_squared, video1_squared.duration)
-        
-#         # Center position calculation
-#         x_position = (output_width - square_size) // 2
-        
-#         # Position videos
-#         video1_final = video1_squared.set_position((x_position , 34))
-#         video2_final = video2_squared.set_position((x_position, square_size - 34))
-        
-#         final_duration = video1_squared.duration
-        
-#         # Create black background
-#         background = ColorClip(size=(output_width, output_height), color=(0, 0, 0), duration=final_duration)
-        
-#         # List of clips to composite
-#         clips = [background, video2_final, video1_final]
-        
-#         if watermark:
-#             watermark_clip = create_watermark(
-#                 watermark, 
-#                 (output_width, output_height, final_duration),
-#                 opacity=watermark_opacity
-#             )
-#             clips.append(watermark_clip)
-        
-#         if text_overlay:
-#             text_clip = create_text_overlay(
-#                 text_overlay,
-#                 (output_width, output_height, final_duration)
-#             )
-#             clips.append(text_clip)
-        
-#         # Create final composite for video
-#         final_video = CompositeVideoClip(clips, size=(output_width, output_height))
-        
-#         # Handle audio mixing
-#         if background_music_path and Path(background_music_path).exists():
-#             try:
-#                 # Get mixed audio clips
-#                 audio_clips = mix_audio(
-#                     video1_squared.audio,
-#                     background_music_path,
-#                     final_duration,
-#                     bg_music_volume
-#                 )
-                
-#                 # Create dummy video clips with the audio
-#                 audio_video_clips = [
-#                     ColorClip(size=(1,1), color=(0,0,0), duration=final_duration)
-#                     .set_audio(audio_clip)
-#                     for audio_clip in audio_clips
-#                 ]
-                
-#                 # Composite the audio
-#                 final_audio = CompositeVideoClip(audio_video_clips).audio
-#                 final_video = final_video.set_audio(final_audio)
-                
-#             except Exception as e:
-#                 print(f"Error with background music, using original audio: {str(e)}")
-#                 final_video = final_video.set_audio(video1_squared.audio)
-#         else:
-#             final_video = final_video.set_audio(video1_squared.audio)
-        
-#         # Export with optimized settings
-#         final_video.write_videofile(
-#             output_path,
-#             codec="libx264",
-#             audio_codec="aac",
-#             preset="faster",
-#             threads=4,
-#             bitrate="4000k",
-#             fps=video1.fps
-#         )
-        
-#     except Exception as e:
-#         print(f"Error processing videos: {str(e)}")
-#         raise
-        
-#     finally:
-#         # Clean up
-#         try:
-#             video1.close()
-#             video2.close()
-#             final_video.close()
-#         except:
-#             pass
-
-
 def resize_to_square(video, square_size):
     """Resize a video to a square while maintaining aspect ratio."""
     width, height = video.size
@@ -322,18 +282,27 @@ def resize_to_square(video, square_size):
 
 # Example usage:
 combine_videos_vertically(
-    "Arpit bala's Muslim joke (deleted stream).mp4",  # Main video with audio to keep
-    "temp/Subway Surfer.mp4",  # Secondary video to loop/trim
-    "output_with_Bgmusic.mp4",  # final output video
+    
+    video1_path="Input_videos/Arpit bala's Muslim joke (deleted stream).mp4", # Main video with audio to keep
+    video2_path="Input_videos/Subway Surfer.mp4", # Secondary video to loop/trim
+    output_path="output_videos/output.mp4",   # Output video path
+    
     video1_offset= 30,   
     video2_offset= 30,
-    target_resolution=1080,     # resolution of thr final video
+    target_resolution=1024,     # resolution of thr final video
     watermark="@KunalChaudhary",    #video watermark
-    watermark_opacity=0.6,      # watermark opacity transparency
-    text_overlay="""Follow for more!
-    Like & Subscribe""",        #text at the top of the video
+    watermark_opacity=0.6,      # watermark opacity transparency 
+    bg_music_volume=0.2,   # Adjust this value between 0.0 and 1.0 to control background music volume
     background_music_path="audio_test.mp3",  # Path to your background music
-    bg_music_volume=0.2   # Adjust this value between 0.0 and 1.0 to control background music volume
-)
+    text_overlay="""
+    Follow for more!
+    Like & Subscribe""",        #text at the top of the video
+    text_color='#FFD700',      # Gold color
+    text_position='bottom',          # Use 'top', 'bottom', or tuple (x,y) for custom position
+    text_fontsize=50,            # Larger font size
+    text_font='Impact',          # Different font
+    # text_color='#FF4444',        # Red color (can use hex codes or color names)
+    # text_x_offset=20,            # Move text 20 pixels right
+    # text_y_offset=10,            # Move text 10 pixels down
+)    
 
-# add two new peramets where i can give the video position 
