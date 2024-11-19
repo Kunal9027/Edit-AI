@@ -280,30 +280,6 @@ def resize_to_square(video, square_size):
     video = video.resize((square_size, square_size))
     return video
 
-# Example usage:
-combine_videos_vertically(
-    video1_path="Input_videos/Arpit bala's Muslim joke (deleted stream).mp4", # Main video with audio to keep
-    video2_path="Input_videos/Subway Surfer.mp4", # Secondary video to loop/trim
-    output_path="output_videos/output.mp4",   # Output video path
-    video1_offset= 30,   
-    video2_offset= 30,
-    target_resolution=1024,     # resolution of thr final video
-    watermark="@KunalChaudhary",    #video watermark
-    watermark_opacity=0.6,      # watermark opacity transparency 
-    bg_music_volume=0.2,   # Adjust this value between 0.0 and 1.0 to control background music volume
-    background_music_path="audio_test.mp3",  # Path to your background music
-    text_overlay="""
-    Follow for more!
-    Like & Subscribe""",        #text at the top of the video
-    text_color='#FFD700',      # Gold color
-    text_position='bottom',          # Use 'top', 'bottom', or tuple (x,y) for custom position
-    text_fontsize=50,            # Larger font size
-    text_font='Impact',          # Different font
-    # text_color='#FF4444',        # Red color (can use hex codes or color names)
-    # text_x_offset=20,            # Move text 20 pixels right
-    # text_y_offset=10,            # Move text 10 pixels down
-)
-
 
 
 
