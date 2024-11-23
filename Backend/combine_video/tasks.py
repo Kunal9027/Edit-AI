@@ -136,7 +136,7 @@ def adjust_video2_duration(video2, target_duration):
         return video2.subclip(0, target_duration)
 
 def combine_videos_vertically(
-       video1_path, 
+    video1_path, 
     video2_path, 
     output_path, 
     target_resolution=1080, 

@@ -1,4 +1,3 @@
-# views.py
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -76,6 +75,12 @@ class VideoCombinerAPIView(APIView):
 
             # Call the video combining function
             combine_videos_vertically(**params)
+            
+             # Clean up input files
+            os.remove(video1_path)
+            os.remove(video2_path)
+            if background_music_path:
+                os.remove(background_music_path)
 
             # Return the URL of the processed video
             output_url = f"{settings.MEDIA_URL}output_videos/{output_filename}"
@@ -89,6 +94,9 @@ class VideoCombinerAPIView(APIView):
                 {"error": str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+def video_combiner_view(request):
+    return render(request, 'index.html')
 
 def video_combiner_view(request):
     return render(request, 'index.html')

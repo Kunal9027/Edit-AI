@@ -3,8 +3,9 @@ myenv
 input_videos
 output_videos
 Backend/media
-testing
 
+videos
+testing_local
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
