@@ -53,8 +53,13 @@ class VideoCombinerAPIView(APIView):
                     for chunk in background_music.chunks():
                         destination.write(chunk)
 
-            # Get other parameters from request data
+            # Get parameters from request data
             data = request.data
+            
+            # Parse aspect ratio into tuple of integers
+            aspect_ratio_str = data.get('aspect_ratio', '16:9')
+            aspect_ratio = tuple(map(int, aspect_ratio_str.split(':')))
+
             params = {
                 'video1_path': video1_path,
                 'video2_path': video2_path,
@@ -62,21 +67,22 @@ class VideoCombinerAPIView(APIView):
                 'video1_offset': int(data.get('video1_offset', 30)),
                 'video2_offset': int(data.get('video2_offset', 30)),
                 'target_resolution': int(data.get('target_resolution', 1024)),
-                'watermark': data.get('watermark', '@KunalChaudhary2'),
+                'watermark': str(data.get('watermark', '@KunalChaudhary2')),
                 'watermark_opacity': float(data.get('watermark_opacity', 0.6)),
                 'bg_music_volume': float(data.get('bg_music_volume', 0.2)),
                 'background_music_path': background_music_path,
-                'text_overlay': data.get('text_overlay', 'Follow for more!\nLike & Subscribe'),
-                'text_color': data.get('text_color', '#FFD700'),
-                'text_position': data.get('text_position', 'bottom'),
+                'text_overlay': str(data.get('text_overlay', 'Follow for more!\nLike & Subscribe')),
+                'text_color': str(data.get('text_color', '#FFD700')),
+                'text_position': str(data.get('text_position', 'bottom')),
                 'text_fontsize': int(data.get('text_fontsize', 50)),
-                'text_font': data.get('text_font', 'Impact'),
+                'text_font': str(data.get('text_font', 'Impact')),
+                'aspect_ratio': aspect_ratio,  # Updated to use tuple
             }
 
             # Call the video combining function
             combine_videos_vertically(**params)
             
-             # Clean up input files
+            # Clean up input files
             os.remove(video1_path)
             os.remove(video2_path)
             if background_music_path:
@@ -89,14 +95,16 @@ class VideoCombinerAPIView(APIView):
                 "output_url": output_url
             }, status=status.HTTP_200_OK)
 
+        except ValueError as ve:
+            return Response(
+                {"error": f"Invalid input value: {str(ve)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             return Response(
                 {"error": str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-def video_combiner_view(request):
-    return render(request, 'index.html')
 
 def video_combiner_view(request):
     return render(request, 'index.html')

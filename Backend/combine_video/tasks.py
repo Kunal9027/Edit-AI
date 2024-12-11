@@ -2,9 +2,13 @@ from moviepy.editor import VideoFileClip, CompositeVideoClip, TextClip, AudioFil
 import numpy as np
 from moviepy.config import change_settings
 from pathlib import Path
+import platform
 
 # Configure moviepy to use ImageMagick for text
-change_settings({"IMAGEMAGICK_BINARY": "C:\\Program Files\\ImageMagick-7.1.1-Q16-HDRI\\magick.exe"})
+if platform.system() == "Windows":
+    change_settings({"IMAGEMAGICK_BINARY": "C:\\Program Files\\ImageMagick-7.1.1-Q16-HDRI\\magick.exe"})
+else:
+    change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
 def create_watermark(text, size, opacity=0.7, fontsize=30):
     """Create a semi-transparent watermark"""
@@ -136,7 +140,7 @@ def adjust_video2_duration(video2, target_duration):
         return video2.subclip(0, target_duration)
 
 def combine_videos_vertically(
-    video1_path, 
+       video1_path, 
     video2_path, 
     output_path, 
     target_resolution=1080, 
@@ -247,7 +251,7 @@ def combine_videos_vertically(
             audio_codec="aac",
             preset="faster",
             threads=4,
-            bitrate="4000k",
+            bitrate="8000k",
             fps=video1.fps
         )
         
@@ -279,8 +283,4 @@ def resize_to_square(video, square_size):
     # Resize to square
     video = video.resize((square_size, square_size))
     return video
-
-
-
-
 
