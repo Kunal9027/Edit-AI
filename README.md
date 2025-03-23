@@ -1,3 +1,7 @@
 # Edit-AI
 
-it can make edit easy
+it help automate video editing 
+
+currently working not complete yet 
+
+thankn you
